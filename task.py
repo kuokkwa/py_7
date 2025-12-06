@@ -1,144 +1,116 @@
-import random
-import time
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from typing import List, Tuple
+class Node:
+    """ Клас, що реалізує вузол дерева """
+    def __init__(self, key):
+        """ Конструктор - створює вузол дерева
+        :param key: ключ вузла, що створюється
+        """
+        self.mKey = key
+    def setKey(self, key):
+        """ Встановлює ключ для вузла
+        :param key: нове значення ключа
+        """
+        self.mKey = key
+    def key(self):
+        """ Повертає ключ вузла
+        :return: ключ вузла
+        """
+        return self.mKey
+    def __str__(self):
+        """ Повертає ключ вузла.
+        :return: рядок, у вигляді "key"
+        """
+        return str(self.mKey)
 
-random.seed(0)
-np.random.seed(0)
+class Tree(Node):
+    """ Клас, що реалізує структуру даних дерево """
+    def __init__(self, key):
+        """ Конструктор - створює вузол дерева
+        :param key: ключ вузла, що створюється
+        """
+        super().__init__(key)
+        self.mChildren = []
 
-def shell_sort_ops(arr: List[float]) -> Tuple[List[float], dict]:
-    a = list(arr)
-    n = len(a)
-    comps = 0
-    assigns = 0
-    gap = n // 2
-    
-    while gap > 0:
-        for i in range(gap, n):
-            temp = a[i]
-            assigns += 1
-            j = i
-            while j >= gap:
-                comps += 1
-                if a[j-gap] > temp:
-                    a[j] = a[j-gap]
-                    assigns += 1
-                    j -= gap
-                else:
-                    break
-            a[j] = temp
-            assigns += 1
-        gap //= 2
-    return a, {"comparisons": comps, "assignments": assigns, "total": comps + assigns}
+    def addChild(self, child):
+        """ Додає до поточного вузла заданий вузол (разом з відповідним піддеревом) """
+        self.mChildren.append(child)
 
-def merge_sort_ops(arr: List[float]) -> Tuple[List[float], dict]:
-    a = list(arr)
-    comps = 0
-    assigns = 0
-    
-    def merge(left: List[float], right: List[float]) -> List[float]:
-        nonlocal comps, assigns
-        i = j = 0
-        merged = []
-        while i < len(left) and j < len(right):
-            comps += 1
-            if left[i] <= right[j]:
-                merged.append(left[i])
-                assigns += 1
-                i += 1
-            else:
-                merged.append(right[j])
-                assigns += 1
-                j += 1
-        while i < len(left):
-            merged.append(left[i])
-            assigns += 1
-            i += 1
-        while j < len(right):
-            merged.append(right[j])
-            assigns += 1
-            j += 1
-        return merged
+    def removeChild(self, key):
+        """ Видаляє у поточному вузлі вузол-дитину за ключем """
+        for child in self.mChildren:
+            if child.key() == key:
+                self.mChildren.remove(child)
+                return True
+        return False
 
-    def msort(lst: List[float]) -> List[float]:
-        if len(lst) <= 1:
-            return lst[:]
-        mid = len(lst) // 2
-        left = msort(lst[:mid])
-        right = msort(lst[mid:])
-        return merge(left, right)
+    def getChild(self, key):
+        """ За заданим ключем, повертає вузол зі списку дітей """
+        for child in self.mChildren:
+            if child.key() == key:
+                return child
+        return None
 
-    sorted_a = msort(a)
-    return sorted_a, {"comparisons": comps, "assignments": assigns, "total": comps + assigns}
+    def getChildren(self):
+        """ Повертає список дітей поточного вузла """
+        return self.mChildren
 
-Ns = list(range(100, 2001, 100))
-repeat = 5
-results = []
+# Дерево, варіант 10
+def createVariantTree():
 
-print("Початок експерименту...")
+    # Листя
+    node3 = Tree(3)
+    node13 = Tree(13)
+    node17 = Tree(17)
 
-for N in Ns:
-    times_shell = []
-    ops_shell = []
-    times_merge = []
-    ops_merge = []
-    
-    for _ in range(repeat):
-        data = [random.randint(0, 50) for _ in range(N)]
-        
-        # Shell Sort
-        t0 = time.perf_counter()
-        _, ops1 = shell_sort_ops(data)
-        t1 = time.perf_counter()
-        times_shell.append(t1 - t0)
-        ops_shell.append(ops1["total"])
-        
-        t0 = time.perf_counter()
-        _, ops2 = merge_sort_ops(data)
-        t1 = time.perf_counter()
-        times_merge.append(t1 - t0)
-        ops_merge.append(ops2["total"])
-    
-    results.append({
-        "N": N,
-        "time_shell_avg": sum(times_shell)/repeat,
-        "ops_shell_avg": sum(ops_shell)/repeat,
-        "time_merge_avg": sum(times_merge)/repeat,
-        "ops_merge_avg": sum(ops_merge)/repeat,
-    })
+    # Внутрішні вузли
+    node2 = Tree(2)
+    node2.addChild(node3)
+    node4 = Tree(4)
+    node4.addChild(node2)
+    node18 = Tree(18)
+    node18.addChild(node17)
+    node16 = Tree(16)
+    node16.addChild(node13)
+    node16.addChild(node18)
 
-df = pd.DataFrame(results)
+    # Корінь
+    root = Tree(10)
+    root.addChild(node4)    # 10 -> 4
+    root.addChild(node16)   # 10 -> 16
 
-pd.options.display.float_format = '{:,.4f}'.format
-print("\nТаблиця результатів (перші 10 рядків):")
-print(df[["N", "time_shell_avg", "ops_shell_avg", "time_merge_avg", "ops_merge_avg"]].head(10).to_string(index=False))
+    return root
 
-# Графік 1: Час виконання
-plt.figure(figsize=(10, 6))
-plt.plot(df["N"], df["time_shell_avg"], marker='o', label="Сортування Шелла (Shell Sort)")
-plt.plot(df["N"], df["time_merge_avg"], marker='s', label="Сортування злиттям (Merge Sort)")
-plt.xlabel("Розмір списку (N)")
-plt.ylabel("Середній час (сек)")
-plt.title("Залежність часу виконання від розміру списку")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+# Обходи
+def dfs_preorder(node, result=None):
+    """ Рекурсивний обхід в глибину (pre-order) """
+    if result is None:
+        result = []
+    if node is None:
+        return result
+    result.append(node.key())
+    for child in node.getChildren():
+        dfs_preorder(child, result)
+    return result
 
-# Графік 2: Кількість операцій
-plt.figure(figsize=(10, 6))
-plt.plot(df["N"], df["ops_shell_avg"], marker='o', label="Shell Sort (Total Ops)")
-plt.plot(df["N"], df["ops_merge_avg"], marker='s', label="Merge Sort (Total Ops)")
-plt.xlabel("Розмір списку (N)")
-plt.ylabel("Кількість елементарних операцій")
-plt.title("Залежність кількості операцій від розміру списку")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+from collections import deque
+def bfs_level_order(root):
+    """ Обхід в ширину (level-order / BFS) """
+    if root is None:
+        return []
+    result = []
+    q = deque([root])
+    while q:
+        node = q.popleft()
+        result.append(node.key())
+        for child in node.getChildren():
+            q.append(child)
+    return result
 
-csv_path = "sort_experiment_results.csv"
-df.to_csv(csv_path, index=False)
-print(f"\nФайл з результатами збережено: {csv_path}")
+# Головна програма
+if __name__ == "__main__":
+    tree = createVariantTree()
+
+    dfs_order = dfs_preorder(tree)
+    bfs_order = bfs_level_order(tree)
+
+    print("Обхід в глибину:", dfs_order)
+    print("Обхід в ширину:", bfs_order)
